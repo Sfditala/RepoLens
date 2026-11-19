@@ -12,9 +12,11 @@
 import asyncio
 import logging
 import re
+import shutil
 from collections.abc import Sequence
 
 from repolens.config import settings
+from repolens.core import github_api
 from repolens.core.readers import build_snapshot
 from repolens.core.repo_loader import cloned_repo
 from repolens.evaluators import BaseEvaluator, default_evaluators
@@ -50,9 +52,20 @@ def normalize_url(raw: str) -> str:
     return f"https://github.com/{owner}/{repo}"
 
 
+def use_git() -> bool:
+    if settings.repo_source == "auto":
+        return shutil.which("git") is not None
+    return settings.repo_source == "git"
+
+
 def collect_snapshot(url: str) -> RepoSnapshot:
-    with cloned_repo(url) as root:
-        return build_snapshot(url, root)
+    if use_git():
+        with cloned_repo(url) as root:
+            return build_snapshot(url, root)
+    # بدون git (مثلاً على Vercel): tarball + commits من GitHub API
+    commits = github_api.fetch_commit_messages(url, settings.max_commits)
+    with github_api.downloaded_repo(url) as root:
+        return build_snapshot(url, root, commit_messages=commits)
 
 
 def overall_score(sections: Sequence[SectionResult]) -> float:

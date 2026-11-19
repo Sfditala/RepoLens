@@ -39,6 +39,8 @@ class Settings(BaseSettings):
     effort: Literal["low", "medium", "high", "xhigh", "max"] = "medium"
     # إذا الموديل رفض الطلب لأسباب أمان، الـ API بيعيد الطلب على موديل بديل تلقائياً
     refusal_fallback: bool = True  # Claude بس
+    # من وين ننزّل الريبو: git (git clone) أو api (GitHub API، بدون git). auto = git إذا موجود
+    repo_source: Literal["auto", "git", "api"] = "auto"
     # حد الطلبات بالدقيقة (0 = بلا حد). الـ free tier تبع Gemini بيسمح بـ 5 بالدقيقة بس
     requests_per_minute: int = 0
 

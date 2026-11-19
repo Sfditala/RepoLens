@@ -84,17 +84,20 @@ def pick_code_files(root: Path, files: list[Path], limit: int) -> list[Path]:
 
 
 def read_commit_messages(root: Path, limit: int) -> Iterator[str]:
-    result = subprocess.run(
-        ["git", "-C", str(root), "log", f"-{limit}", "--pretty=format:%s"],
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-    )
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(root), "log", f"-{limit}", "--pretty=format:%s"],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+        )
+    except FileNotFoundError:  # ما في git على الجهاز (مثلاً Vercel)
+        return
     yield from (line for line in result.stdout.splitlines() if line.strip())
 
 
-def build_snapshot(url: str, root: Path) -> RepoSnapshot:
+def build_snapshot(url: str, root: Path, commit_messages: list[str] | None = None) -> RepoSnapshot:
     files = sorted(walk_files(root))
 
     samples = []
@@ -115,6 +118,10 @@ def build_snapshot(url: str, root: Path) -> RepoSnapshot:
         has_tests_dir=any(part.lower() in TEST_DIR_NAMES for f in files for part in f.parts[:-1]),
         has_requirements=any(f.name in REQUIREMENTS_FILES for f in files),
         has_gitignore=(root / ".gitignore").is_file(),
-        commit_messages=list(read_commit_messages(root, settings.max_commits)),
+        commit_messages=(
+            commit_messages
+            if commit_messages is not None
+            else list(read_commit_messages(root, settings.max_commits))
+        ),
         code_samples=samples,
     )

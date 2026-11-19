@@ -81,11 +81,12 @@ RepoLens/
 │   ├── __main__.py          التشغيل من الطرفية
 │   ├── config.py            الإعدادات من .env
 │   ├── models.py            نماذج Pydantic (RepoSnapshot, SectionResult, Report)
-│   ├── llm.py               LangChain + Claude مع structured output
+│   ├── llm.py               LangChain + Gemini أو Claude مع structured output
 │   ├── pipeline.py          بيربط كل الخطوات ببعض
 │   ├── report.py            بيحوّل التقرير لنص
 │   ├── core/
-│   │   ├── repo_loader.py   context manager للتنزيل المؤقت
+│   │   ├── repo_loader.py   context manager للتنزيل المؤقت (git clone)
+│   │   ├── github_api.py    التنزيل عن طريق GitHub API (لما ما في git، متل Vercel)
 │   │   ├── readers.py       generators لقراءة الملفات
 │   │   └── decorators.py    retry و timed
 │   └── evaluators/
@@ -94,8 +95,13 @@ RepoLens/
 │       ├── structure.py
 │       ├── tests.py
 │       └── commits.py
+├── api/index.py             الـ API تبع الموقع (FastAPI، serverless على Vercel)
+├── public/index.html        صفحة الموقع
+├── scripts/accuracy_check.py فحص الدقة الحقيقي
 ├── tests/                   اختبارات pytest
-├── requirements.txt
+├── requirements.txt         اللي بيحتاجه Vercel
+├── requirements-dev.txt     + الاختبارات والتشغيل المحلي
+├── vercel.json
 ├── .env.example
 ├── .gitignore
 └── pytest.ini

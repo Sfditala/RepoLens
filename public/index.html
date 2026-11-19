@@ -132,7 +132,9 @@ const I18N = {
       repo_unavailable: "Could not download the repo. Make sure it exists and is public.",
       not_configured: "The server is missing its model API key.",
       analysis_failed: "The model could not finish the review (it may be out of quota). Please try again later.",
-      network: "Network error or the request timed out. Please try again." },
+      network: "Network error or the request timed out. Please try again.",
+      timeout: "The analysis took too long and the server stopped it. Please try again.",
+      server: "Server error." },
     source: "Source on GitHub", seconds: "s"
   },
   ar: {
@@ -150,7 +152,9 @@ const I18N = {
       repo_unavailable: "ما قدرنا ننزّل الريبو. تأكد إنه موجود وعام (public).",
       not_configured: "السيرفر ما فيه API key للموديل.",
       analysis_failed: "الموديل ما قدر يكمّل التقييم (ممكن خلصت الحصة). جرّب كمان شوي.",
-      network: "مشكلة بالشبكة أو الطلب طوّل كتير. جرّب مرة تانية." },
+      network: "مشكلة بالشبكة أو الطلب طوّل كتير. جرّب مرة تانية.",
+      timeout: "التحليل طوّل كتير والسيرفر وقّفه. جرّب مرة تانية.",
+      server: "خطأ بالسيرفر." },
     source: "الكود على GitHub", seconds: "ث"
   }
 };
@@ -284,7 +288,12 @@ async function analyze(url) {
     });
     let data = null;
     try { data = await res.json(); } catch (_) {}
-    if (!res.ok) return showError(data && data.error, data && data.message);
+    if (!res.ok) {
+      if (data && data.error) return showError(data.error, data.message);
+      // رد مش JSON (مثلاً timeout من Vercel): منوري رقم الخطأ بدل "network error"
+      const t = I18N[lang].errors;
+      return showError(null, `${res.status === 504 ? t.timeout : t.server} (HTTP ${res.status})`);
+    }
     lastData = data;
     render(data);
   } catch (_) {

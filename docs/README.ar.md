@@ -120,15 +120,17 @@ RepoLens/
 
 ```bash
 .venv\Scripts\activate
-pip install -r requirements.txt
+pip install -r requirements-dev.txt
 copy .env.example .env      # وحط GOOGLE_API_KEY (Gemini) أو ANTHROPIC_API_KEY (Claude) جوّاه
 ```
 
-**الواجهة:**
+**الموقع:**
 
 ```bash
-streamlit run app.py
+uvicorn api.index:app --reload
 ```
+
+وافتح http://localhost:8000. وعلى Vercel: اعمل import للريبو وحط GOOGLE_API_KEY و REPOLENS_REQUESTS_PER_MINUTE=5 بالـ Environment Variables.
 
 **الطرفية:**
 
@@ -147,5 +149,5 @@ python -m scripts.accuracy_check    # دقة حقيقية: المعايرة، ا
 ## إضافات لاحقة
 
 - [ ] سؤال وجواب عن الريبو (اختياري)
-- [x] واجهة بسيطة (Streamlit)
+- [x] واجهة ويب (FastAPI + HTML، بتنرفع على Vercel)
 - [ ] صورة للتقرير بتنفع تنحط على LinkedIn

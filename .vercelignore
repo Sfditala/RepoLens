@@ -1,0 +1,10 @@
+.venv
+.env
+.claude
+tests
+scripts
+docs
+.github
+.pytest_cache
+scratch.py
+**/__pycache__

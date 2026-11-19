@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RepoLens</title>
+  <meta name="description" content="See your GitHub repo the way a recruiter sees it.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔍</text></svg>">
+  <style>
+    :root {
+      --bg: #f6f7f9; --card: #ffffff; --text: #18202b; --muted: #5d6878; --line: #e2e6ec;
+      --accent: #2f6fd6; --accent-text: #ffffff;
+      --good: #1f9d55; --ok: #2f6fd6; --warn: #c97a10; --bad: #cf3d33; --low: #6b7686;
+      --shadow: 0 1px 2px rgba(16,24,40,.06), 0 4px 16px rgba(16,24,40,.06);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0f1318; --card: #171c23; --text: #e7ebf0; --muted: #98a3b3; --line: #2a313b;
+        --accent: #5b93ec; --good: #3dbb74; --ok: #5b93ec; --warn: #e3a03a; --bad: #ec6a5f; --low: #8a95a5;
+        --shadow: none;
+      }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text);
+      font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Tahoma, "Noto Sans Arabic", sans-serif; }
+    .wrap { max-width: 920px; margin: 0 auto; padding: 28px 16px 64px; }
+    header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    .brand { display: flex; align-items: center; gap: 10px; }
+    .brand h1 { margin: 0; font-size: 1.9rem; letter-spacing: -.02em; }
+    .tagline { margin: 4px 0 24px; color: var(--muted); font-size: 1.08rem; }
+    .lang { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; background: var(--card); }
+    .lang button { border: 0; background: transparent; color: var(--muted); padding: 6px 14px; cursor: pointer; font: inherit; font-size: .9rem; }
+    .lang button[aria-pressed="true"] { background: var(--accent); color: var(--accent-text); }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 18px; box-shadow: var(--shadow); }
+    form { display: flex; gap: 10px; flex-wrap: wrap; }
+    form input { flex: 1 1 260px; min-width: 0; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--line);
+      background: var(--bg); color: var(--text); font: inherit; direction: ltr; }
+    form input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+    .btn { border: 0; border-radius: 10px; padding: 12px 20px; font: inherit; font-weight: 600; cursor: pointer;
+      background: var(--accent); color: var(--accent-text); }
+    .btn:disabled { opacity: .6; cursor: progress; }
+    .btn.secondary { background: transparent; color: var(--accent); border: 1px solid var(--line); font-weight: 500; }
+    .examples { margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; color: var(--muted); font-size: .9rem; }
+    .chip { border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; background: transparent; color: var(--text);
+      font: inherit; font-size: .85rem; cursor: pointer; direction: ltr; }
+    .what { margin-top: 14px; color: var(--muted); font-size: .95rem; }
+    .status { margin-top: 18px; display: none; align-items: center; gap: 12px; }
+    .status.show { display: flex; }
+    .spinner { width: 22px; height: 22px; border-radius: 50%; border: 3px solid var(--line); border-top-color: var(--accent);
+      animation: spin 1s linear infinite; flex: none; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) { .spinner { animation: none; } }
+    .alert { margin-top: 18px; padding: 12px 14px; border-radius: 10px; display: none;
+      background: color-mix(in srgb, var(--bad) 12%, transparent); color: var(--bad); }
+    .alert.show { display: block; }
+    .alert.warn { background: color-mix(in srgb, var(--warn) 14%, transparent); color: var(--warn); }
+    #result { display: none; margin-top: 22px; }
+    #result.show { display: block; }
+    .hero { display: flex; gap: 20px; align-items: center; color: #fff; border-radius: 18px; padding: 22px; flex-wrap: wrap; }
+    .hero .num { font-size: 3.4rem; font-weight: 800; line-height: 1; direction: ltr; }
+    .hero .num small { font-size: 1.4rem; opacity: .8; }
+    .hero a { color: #fff; }
+    .hero .meta { opacity: .92; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-top: 14px; }
+    .area .t { color: var(--muted); font-size: .92rem; }
+    .area .s { font-size: 1.7rem; font-weight: 700; }
+    .bar { height: 6px; border-radius: 3px; background: var(--line); margin-top: 6px; overflow: hidden; }
+    .bar > i { display: block; height: 100%; border-radius: 3px; }
+    h2 { font-size: 1.2rem; margin: 26px 0 10px; }
+    ol.plan { margin: 0; padding-inline-start: 22px; }
+    ol.plan li { margin: 6px 0; }
+    details { background: var(--card); border: 1px solid var(--line); border-radius: 14px; margin-top: 10px; }
+    summary { cursor: pointer; padding: 14px 16px; font-weight: 600; display: flex; justify-content: space-between; gap: 10px; }
+    details > div { padding: 0 16px 14px; }
+    .finding { margin: 10px 0; }
+    .sev { display: inline-block; color: #fff; border-radius: 6px; padding: 0 8px; font-size: .78rem; margin-inline-end: 6px; }
+    .evidence { color: var(--muted); font-size: .88rem; }
+    .evidence code { direction: ltr; unicode-bidi: isolate; }
+    .downloads { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 22px; }
+    footer { margin-top: 40px; color: var(--muted); font-size: .85rem; text-align: center; }
+    footer a { color: var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand"><span style="font-size:1.8rem">🔍</span><h1>RepoLens</h1></div>
+      <div class="lang" role="group" aria-label="Language">
+        <button type="button" data-lang="en">English</button>
+        <button type="button" data-lang="ar">العربية</button>
+      </div>
+    </header>
+    <p class="tagline" data-i18n="tagline"></p>
+
+    <div class="card">
+      <form id="form">
+        <input id="url" name="url" type="text" autocomplete="off" spellcheck="false"
+               placeholder="https://github.com/user/repo" aria-label="GitHub repository URL" required>
+        <button class="btn" id="go" type="submit" data-i18n="button"></button>
+      </form>
+      <div class="examples"><span data-i18n="try"></span>
+        <button class="chip" type="button" data-example="octocat/Hello-World">octocat/Hello-World</button>
+        <button class="chip" type="button" data-example="pallets/itsdangerous">pallets/itsdangerous</button>
+      </div>
+      <p class="what" data-i18n="what"></p>
+    </div>
+
+    <div class="status" id="status" role="status" aria-live="polite">
+      <div class="spinner"></div><div><b id="stage"></b> <span id="elapsed" style="color:var(--muted)"></span></div>
+    </div>
+    <div class="alert" id="alert" role="alert"></div>
+
+    <section id="result" aria-live="polite"></section>
+
+    <footer>RepoLens · <a href="https://github.com" id="source" data-i18n="source"></a></footer>
+  </div>
+
+<script>
+const I18N = {
+  en: {
+    tagline: "See your GitHub repo the way a recruiter sees it.",
+    button: "Analyze repo", try: "Try:",
+    what: "Reviews the README, project structure, tests & CI, and commit messages. Every finding cites evidence from the repo.",
+    stages: ["Downloading the repo…", "Reading files and commits…", "Reviewing README, structure, tests and commits…", "Still reviewing… the free model tier is rate limited"],
+    overall: "Overall score", verdict: ["Needs a lot of work", "Fair", "Good", "Excellent"],
+    plan: "Improvement plan", summary: "Summary", findings: "Findings", suggestions: "Suggestions",
+    noFindings: "No clear problems.", evidence: "evidence", failed: "Could not evaluate",
+    areas: { readme: "README", structure: "Structure", tests: "Tests", commits: "Commits" },
+    severity: { high: "high", medium: "medium", low: "low" },
+    md: "Download Markdown", json: "Download JSON", cached: "(cached result)",
+    errors: { invalid_url: "That is not a GitHub repository. Try https://github.com/user/repo",
+      repo_unavailable: "Could not download the repo. Make sure it exists and is public.",
+      not_configured: "The server is missing its model API key.",
+      analysis_failed: "The model could not finish the review (it may be out of quota). Please try again later.",
+      network: "Network error or the request timed out. Please try again." },
+    source: "Source on GitHub", seconds: "s"
+  },
+  ar: {
+    tagline: "شوف الريبو تبعك متل ما بيشوفه الـ recruiter.",
+    button: "حلّل الريبو", try: "جرّب:",
+    what: "بيقيّم الـ README، بنية المشروع، الاختبارات و CI، ورسائل الـ commits. كل ملاحظة إلها دليل من الريبو.",
+    stages: ["عم ننزّل الريبو…", "عم نقرأ الملفات والـ commits…", "عم نقيّم الـ README والبنية والاختبارات والـ commits…", "لسا عم نقيّم… الموديل المجاني إله حد للطلبات بالدقيقة"],
+    overall: "الدرجة الكلية", verdict: ["بدها شغل كتير", "مقبولة", "منيحة", "ممتازة"],
+    plan: "خطة التحسين", summary: "الخلاصة", findings: "المشاكل", suggestions: "الاقتراحات",
+    noFindings: "ما في مشاكل واضحة.", evidence: "الدليل", failed: "ما قدرنا نقيّم",
+    areas: { readme: "README", structure: "البنية", tests: "الاختبارات", commits: "Commits" },
+    severity: { high: "عالية", medium: "متوسطة", low: "منخفضة" },
+    md: "نزّل Markdown", json: "نزّل JSON", cached: "(نتيجة محفوظة)",
+    errors: { invalid_url: "الرابط مش رابط ريبو GitHub. جرّب https://github.com/user/repo",
+      repo_unavailable: "ما قدرنا ننزّل الريبو. تأكد إنه موجود وعام (public).",
+      not_configured: "السيرفر ما فيه API key للموديل.",
+      analysis_failed: "الموديل ما قدر يكمّل التقييم (ممكن خلصت الحصة). جرّب كمان شوي.",
+      network: "مشكلة بالشبكة أو الطلب طوّل كتير. جرّب مرة تانية." },
+    source: "الكود على GitHub", seconds: "ث"
+  }
+};
+
+let lang = "en";
+let lastData = null;
+let timer = null;
+const $ = (id) => document.getElementById(id);
+
+function el(tag, attrs = {}, ...children) {
+  const node = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === "class") node.className = v;
+    else if (k === "style") node.style.cssText = v;
+    else node.setAttribute(k, v);
+  }
+  for (const c of children.flat()) node.append(c instanceof Node ? c : document.createTextNode(String(c)));
+  return node;
+}
+
+function scoreColor(s) {
+  const v = getComputedStyle(document.documentElement);
+  return v.getPropertyValue(s >= 8 ? "--good" : s >= 6 ? "--ok" : s >= 4 ? "--warn" : "--bad").trim();
+}
+function sevColor(sev) {
+  const v = getComputedStyle(document.documentElement);
+  return v.getPropertyValue(sev === "high" ? "--bad" : sev === "medium" ? "--warn" : "--low").trim();
+}
+
+function setLang(next) {
+  lang = next;
+  try { localStorage.setItem("repolens-lang", next); } catch (_) {}
+  document.documentElement.lang = next;
+  document.documentElement.dir = next === "ar" ? "rtl" : "ltr";
+  document.querySelectorAll("[data-i18n]").forEach((n) => { n.textContent = I18N[next][n.dataset.i18n]; });
+  document.querySelectorAll(".lang button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.lang === next)));
+}
+
+function showError(code, fallback) {
+  const a = $("alert");
+  a.className = "alert show";
+  a.textContent = I18N[lang].errors[code] || fallback || I18N[lang].errors.network;
+}
+
+function startProgress() {
+  const t = I18N[lang];
+  const started = Date.now();
+  $("status").classList.add("show");
+  const tick = () => {
+    const secs = Math.floor((Date.now() - started) / 1000);
+    const stage = secs < 4 ? 0 : secs < 10 ? 1 : secs < 90 ? 2 : 3;
+    $("stage").textContent = t.stages[stage];
+    $("elapsed").textContent = `${secs}${t.seconds}`;
+  };
+  tick();
+  timer = setInterval(tick, 1000);
+}
+function stopProgress() { clearInterval(timer); $("status").classList.remove("show"); }
+
+function download(name, text, type) {
+  const url = URL.createObjectURL(new Blob([text], { type }));
+  const a = el("a", { href: url, download: name });
+  document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function render(data) {
+  const t = I18N[lang];
+  const r = data.report;
+  const out = $("result");
+  out.replaceChildren();
+  const short = r.repo_url.replace("https://github.com/", "");
+  const verdict = t.verdict[r.overall_score < 4 ? 0 : r.overall_score < 6 ? 1 : r.overall_score < 8 ? 2 : 3];
+
+  out.append(el("div", { class: "hero", style: `background:${scoreColor(r.overall_score)}` },
+    el("div", { class: "num" }, String(r.overall_score), el("small", {}, "/10")),
+    el("div", { class: "meta" },
+      el("div", {}, `${t.overall} · `, el("a", { href: r.repo_url, target: "_blank", rel: "noopener" }, short)),
+      el("div", { style: "font-weight:600" }, verdict, data.cached ? ` ${t.cached}` : ""))));
+
+  if (r.failed_areas && r.failed_areas.length) {
+    out.append(el("div", { class: "alert warn show" }, `${t.failed}: ${r.failed_areas.map((a) => t.areas[a] || a).join(", ")}`));
+  }
+
+  out.append(el("div", { class: "grid" }, r.sections.map((s) =>
+    el("div", { class: "card area" },
+      el("div", { class: "t" }, t.areas[s.area] || s.area),
+      el("div", { class: "s", style: `color:${scoreColor(s.score)}` }, `${s.score}/10`),
+      el("div", { class: "bar" }, el("i", { style: `width:${s.score * 10}%;background:${scoreColor(s.score)}` }))))));
+
+  out.append(el("h2", {}, t.plan), el("ol", { class: "plan" }, r.improvement_plan.map((p) => el("li", {}, p))));
+
+  [...r.sections].sort((a, b) => a.score - b.score).forEach((s) => {
+    const body = el("div");
+    if (s.summary) body.append(el("p", {}, el("b", {}, `${t.summary}: `), s.summary));
+    if (s.findings.length) {
+      body.append(el("b", {}, `${t.findings}:`));
+      s.findings.forEach((f) => body.append(el("div", { class: "finding" },
+        el("span", { class: "sev", style: `background:${sevColor(f.severity)}` }, t.severity[f.severity]), f.issue,
+        el("div", { class: "evidence" }, `${t.evidence}: `, el("code", {}, f.evidence)))));
+    } else {
+      body.append(el("p", {}, t.noFindings));
+    }
+    if (s.suggestions.length) {
+      body.append(el("b", {}, `${t.suggestions}:`), el("ul", {}, s.suggestions.map((x) => el("li", {}, x))));
+    }
+    const d = el("details", {}, el("summary", {}, el("span", {}, t.areas[s.area] || s.area),
+      el("span", { style: `color:${scoreColor(s.score)}` }, `${s.score}/10`)), body);
+    if (s.score < 6) d.open = true;
+    out.append(d);
+  });
+
+  const name = short.split("/").pop();
+  const md = el("button", { class: "btn secondary", type: "button" }, t.md);
+  md.onclick = () => download(`repolens-${name}.md`, data.markdown, "text/markdown");
+  const js = el("button", { class: "btn secondary", type: "button" }, t.json);
+  js.onclick = () => download(`repolens-${name}.json`, JSON.stringify(r, null, 2), "application/json");
+  out.append(el("div", { class: "downloads" }, md, js));
+  out.classList.add("show");
+}
+
+async function analyze(url) {
+  $("alert").className = "alert";
+  $("result").classList.remove("show");
+  $("go").disabled = true;
+  startProgress();
+  try {
+    const res = await fetch("/api/analyze", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url, lang }),
+    });
+    let data = null;
+    try { data = await res.json(); } catch (_) {}
+    if (!res.ok) return showError(data && data.error, data && data.message);
+    lastData = data;
+    render(data);
+  } catch (_) {
+    showError("network");
+  } finally {
+    stopProgress();
+    $("go").disabled = false;
+  }
+}
+
+document.querySelectorAll(".lang button").forEach((b) => b.addEventListener("click", () => {
+  setLang(b.dataset.lang);
+  if (lastData) render(lastData);
+}));
+document.querySelectorAll("[data-example]").forEach((b) => b.addEventListener("click", () => {
+  $("url").value = b.dataset.example;
+  $("url").focus();
+}));
+$("form").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const url = $("url").value.trim();
+  if (url) analyze(url);
+});
+
+let saved = null;
+try { saved = localStorage.getItem("repolens-lang"); } catch (_) {}
+setLang(saved || ((navigator.language || "").startsWith("ar") ? "ar" : "en"));
+</script>
+</body>
+</html>

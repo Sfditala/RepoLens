@@ -7,6 +7,6 @@ venv/
 .mypy_cache/
 reports/
 *.log
-.streamlit/secrets.toml
+.vercel
 scratch.py
 .claude/

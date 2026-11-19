@@ -29,17 +29,20 @@ Pick a situation to see what RepoLens says about it. These come from real runs.
 
 ```mermaid
 flowchart LR
-    U["GitHub URL"] --> V{"Valid public<br/>GitHub repo?"}
+    U["GitHub URL"] --> V{"Public GitHub repo?"}
     V -- no --> E["Clear error"]
     V -- yes --> D["Download<br/>git clone or GitHub API"]
-    D --> S["RepoSnapshot<br/>README · file tree · 20 commits · 5 largest files"]
+    D --> S["RepoSnapshot<br/>README, file tree,<br/>20 commits, 5 largest files"]
     S --> R1["README reviewer"]
     S --> R2["Structure reviewer"]
     S --> R3["Tests reviewer"]
     S --> R4["Commits reviewer"]
-    R1 & R2 & R3 & R4 --> L(("Gemini<br/>structured output"))
+    R1 --> L(("Gemini<br/>structured output"))
+    R2 --> L
+    R3 --> L
+    R4 --> L
     L --> W["Weighted score<br/>+ improvement plan"]
-    W --> O["Report<br/>web · CLI · Markdown · JSON"]
+    W --> O["Report<br/>web, CLI, Markdown, JSON"]
 ```
 
 The four reviewers run at the same time with `asyncio.gather`. Each one returns a validated Pydantic object, not free text, so a score of 15 or a missing field is rejected before it reaches the report.

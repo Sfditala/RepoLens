@@ -1,6 +1,6 @@
 # RepoLens
 
-[English](../README.md)
+[English](../README.md) · **جرّبه:** https://repolens-taupe-nu.vercel.app
 
 > شوف الريبو تبعك متل ما بيشوفه الـ recruiter.
 
